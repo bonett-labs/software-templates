@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: react-app-template
   title: React Application
-  description: Cria um novo projeto React com metadados centralizados
+  description: Cria um novo projeto React
   tags:
     - react
     - frontend
@@ -12,7 +12,7 @@ spec:
   type: website
   
   parameters:
-    - title: Informações do Projeto
+    - title: Informações
       required:
         - component_id
         - description
@@ -22,13 +22,10 @@ spec:
         component_id:
           title: Nome
           type: string
-          description: Nome do componente
           ui:field: EntityNamePicker
-        
         description:
           title: Descrição
           type: string
-        
         owner:
           title: Owner
           type: string
@@ -36,7 +33,6 @@ spec:
           ui:options:
             allowedKinds:
               - Group
-        
         system:
           title: Sistema
           type: string
@@ -61,7 +57,7 @@ spec:
 
   steps:
     - id: fetch-base
-      name: Fetch Code Template
+      name: Fetch Template
       action: fetch:template
       input:
         url: ./skeleton
@@ -70,20 +66,20 @@ spec:
           description: ${{ parameters.description }}
     
     - id: publish-code
-      name: Publish Code to GitHub
+      name: Publish Code
       action: publish:github
       input:
         repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
         defaultBranch: main
-        repoVisibility: public
+        repoVisibility: private
     
     - id: fetch-metadata
       name: Prepare Metadata
       action: fetch:template
       input:
         url: ./metadata
-        targetPath: ./metadata-temp
+        targetPath: ./metadata-output
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
@@ -92,17 +88,16 @@ spec:
     
     - id: publish-metadata
       name: Push Metadata
-      action: github:repo:push
+      action: publish:github
       input:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-        sourcePath: metadata-temp
-        targetPath: ${{ parameters.system }}/${{ parameters.component_id }}
-        branchName: main
-        commitMessage: 'feat: Add ${{ parameters.component_id }} metadata'
+        sourcePath: metadata-output
+        defaultBranch: main
+        gitCommitMessage: 'feat: Add ${{ parameters.component_id }} metadata'
 
   output:
     links:
       - title: Code Repository
         url: ${{ steps['publish-code'].output.remoteUrl }}
-      - title: Metadata Location
-        url: https://github.com/bonett-labs/bonettech-zentry-components/tree/main/${{ parameters.system }}/${{ parameters.component_id }}
+      - title: Metadata
+        url: https://github.com/bonett-labs/bonettech-zentry-components/tree/main/${{ parameters.component_id }}
