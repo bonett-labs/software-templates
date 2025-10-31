@@ -6,7 +6,6 @@ metadata:
   description: Cria um novo projeto React
   tags:
     - react
-    - frontend
 spec:
   owner: tribe-web-platforms
   type: website
@@ -86,6 +85,14 @@ spec:
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
     
+    - id: rename-metadata
+      name: Rename Metadata File
+      action: fs:rename
+      input:
+        files:
+          - from: ./metadata-output/catalog-info.yaml
+            to: ./metadata-output/${{ parameters.component_id }}.yaml
+    
     - id: publish-metadata
       name: Create Metadata PR
       action: publish:github:pull-request
@@ -93,13 +100,13 @@ spec:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
         branchName: add-${{ parameters.component_id }}
         title: 'feat: Add ${{ parameters.component_id }} metadata'
-        description: 'Adiciona metadados para o componente ${{ parameters.component_id }}'
+        description: 'Metadata for ${{ parameters.component_id }}'
         sourcePath: metadata-output
-        targetPath: ${{ parameters.system }}/${{ parameters.component_id }}
+        targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}
 
   output:
     links:
       - title: Code Repository
         url: ${{ steps['publish-code'].output.remoteUrl }}
-      - title: Metadata
-        url: https://github.com/bonett-labs/bonettech-zentry-components/tree/main/${{ parameters.component_id }}
+      - title: Metadata PR
+        url: ${{ steps['publish-metadata'].output.remoteUrl }}
