@@ -55,45 +55,61 @@ spec:
               - bonett-labs
 
   steps:
-    - id: fetch-code
-      name: Fetch Code
-      action: fetch:template
-      input:
-        url: ./skeleton
-        values:
-          component_id: ${{ parameters.component_id }}
-          description: ${{ parameters.description }}
-    
-    - id: publish-code
-      name: Publish Code
-      action: publish:github
-      input:
-        repoUrl: ${{ parameters.repoUrl }}
+  - id: fetch-base
+    name: Fetch Template
+    action: fetch:template
+    input:
+      url: ./skeleton
+      values:
+        component_id: ${{ parameters.component_id }}
         description: ${{ parameters.description }}
-        defaultBranch: main
-        repoVisibility: private
-    
-    - id: fetch-metadata
-      name: Fetch Metadata
-      action: fetch:template
-      input:
-        url: ./metadata
-        values:
-          component_id: ${{ parameters.component_id }}
-          description: ${{ parameters.description }}
-          owner: ${{ parameters.owner }}
-          system: ${{ parameters.system }}
-    
-    - id: publish-metadata
-      name: Publish Metadata
-      action: publish:github:pull-request
-      input:
-        repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-        branchName: add-${{ parameters.component_id }}
-        title: 'feat: Add ${{ parameters.component_id }}'
-        description: 'Metadata for ${{ parameters.component_id }}'
-        sourcePath: catalog-info.yaml
-        targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml
+  
+  - id: publish-code
+    name: Publish Code
+    action: publish:github
+    input:
+      repoUrl: ${{ parameters.repoUrl }}
+      description: ${{ parameters.description }}
+      defaultBranch: main
+      repoVisibility: private
+  
+  - id: fetch-metadata
+    name: Prepare Metadata
+    action: fetch:template
+    input:
+      url: ./metadata
+      targetPath: ./metadata-output
+      values:
+        component_id: ${{ parameters.component_id }}
+        description: ${{ parameters.description }}
+        owner: ${{ parameters.owner }}
+        system: ${{ parameters.system }}
+  
+  - id: rename-metadata
+    name: Rename Metadata File
+    action: fs:rename
+    input:
+      files:
+        - from: ./metadata-output/catalog-info.yaml
+          to: ./metadata-output/${{ parameters.component_id }}.yaml
+  
+  - id: publish-metadata
+    name: Create Metadata PR
+    action: publish:github:pull-request
+    input:
+      repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
+      branchName: add-${{ parameters.component_id }}
+      title: 'feat: Add ${{ parameters.component_id }}'
+      description: 'Metadata for ${{ parameters.component_id }}'
+      sourcePath: metadata-output/${{ parameters.component_id }}.yaml
+      targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml
+
+output:
+  links:
+    - title: Code Repository
+      url: ${{ steps['publish-code'].output.remoteUrl }}
+    - title: Metadata PR
+      url: ${{ steps['publish-metadata'].output.remoteUrl }}
 
   output:
     links:
