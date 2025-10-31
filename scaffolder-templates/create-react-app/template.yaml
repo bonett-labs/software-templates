@@ -7,7 +7,6 @@ metadata:
   tags:
     - react
     - frontend
-    - web
 spec:
   owner: tribe-web-platforms
   type: website
@@ -21,18 +20,17 @@ spec:
         - system
       properties:
         component_id:
-          title: Nome do Componente
+          title: Nome
           type: string
-          description: Nome único do componente
+          description: Nome do componente
           ui:field: EntityNamePicker
         
         description:
           title: Descrição
           type: string
-          description: Breve descrição do propósito
         
         owner:
-          title: Time Responsável
+          title: Owner
           type: string
           ui:field: OwnerPicker
           ui:options:
@@ -52,59 +50,59 @@ spec:
         - repoUrl
       properties:
         repoUrl:
-          title: Repository Location
+          title: Repository
           type: string
           ui:field: RepoUrlPicker
           ui:options:
             allowedHosts:
               - github.com
+            allowedOwners:
+              - bonett-labs
 
   steps:
     - id: fetch-base
-      name: Fetch Template
+      name: Fetch Code Template
       action: fetch:template
       input:
         url: ./skeleton
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
-          owner: ${{ parameters.owner }}
-          system: ${{ parameters.system }}
     
-    - id: publish
-      name: Publish Code
+    - id: publish-code
+      name: Publish Code to GitHub
       action: publish:github
       input:
         repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
+        defaultBranch: main
+        repoVisibility: internal
     
     - id: fetch-metadata
       name: Prepare Metadata
       action: fetch:template
       input:
         url: ./metadata
-        targetPath: ./metadata-output
+        targetPath: ./metadata-temp
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
-          repo_url: ${{ steps.publish.output.remoteUrl }}
     
-    - id: pull-request
-      name: Create Metadata PR
-      action: publish:github:pull-request
+    - id: publish-metadata
+      name: Push Metadata
+      action: github:repo:push
       input:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-        branchName: add-${{ parameters.component_id }}
-        title: Add metadata for ${{ parameters.component_id }}
-        description: Metadata for new component
-        sourcePath: ./metadata-output
+        sourcePath: metadata-temp
         targetPath: ${{ parameters.system }}/${{ parameters.component_id }}
+        branchName: main
+        commitMessage: 'feat: Add ${{ parameters.component_id }} metadata'
 
   output:
     links:
-      - title: Repository
-        url: ${{ steps.publish.output.remoteUrl }}
-      - title: Metadata PR
-        url: ${{ steps['pull-request'].output.remoteUrl }}
+      - title: Code Repository
+        url: ${{ steps['publish-code'].output.remoteUrl }}
+      - title: Metadata Location
+        url: https://github.com/bonett-labs/bonettech-zentry-components/tree/main/${{ parameters.system }}/${{ parameters.component_id }}
