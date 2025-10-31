@@ -38,22 +38,20 @@ steps:
           to: ./metadata-output/${{ parameters.component_id }}.yaml
   
   - id: publish-metadata
-    name: Create Metadata PR
-    action: publish:github:pull-request
-    input:
-      repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-      branchName: add-${{ parameters.component_id }}
-      title: 'feat: Add ${{ parameters.component_id }} metadata'
-      description: 'Metadata for ${{ parameters.component_id }}'
-      sourcePath: metadata-output
-      targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}
-  
-  - id: register
-    name: Register in Catalog
-    action: catalog:register
-    input:
-      repoContentsUrl: https://github.com/bonett-labs/bonettech-zentry-components
-      catalogInfoPath: /${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml
+  name: Push Metadata Directly
+  action: publish:github
+  input:
+    repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
+    sourcePath: metadata-output
+    targetBranch: main
+    gitCommitMessage: 'feat: Add ${{ parameters.component_id }} metadata'
+
+- id: register
+  name: Register in Catalog
+  action: catalog:register
+  input:
+    repoContentsUrl: https://github.com/bonett-labs/bonettech-zentry-components
+    catalogInfoPath: /${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml
 
 output:
   links:
