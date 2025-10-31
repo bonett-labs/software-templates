@@ -56,8 +56,8 @@ spec:
               - bonett-labs
 
   steps:
-    - id: fetch-base
-      name: Fetch Template
+    - id: fetch-code
+      name: Fetch Code Template
       action: fetch:template
       input:
         url: ./skeleton
@@ -66,7 +66,7 @@ spec:
           description: ${{ parameters.description }}
     
     - id: publish-code
-      name: Publish Code
+      name: Publish Code Repository
       action: publish:github
       input:
         repoUrl: ${{ parameters.repoUrl }}
@@ -75,24 +75,15 @@ spec:
         repoVisibility: private
     
     - id: fetch-metadata
-      name: Prepare Metadata
+      name: Fetch Metadata Template
       action: fetch:template
       input:
         url: ./metadata
-        targetPath: ./metadata-output
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
-    
-    - id: rename-metadata
-      name: Rename Metadata File
-      action: fs:rename
-      input:
-        files:
-          - from: ./metadata-output/catalog-info.yaml
-            to: ./metadata-output/${{ parameters.component_id }}.yaml
     
     - id: publish-metadata
       name: Create Metadata PR
@@ -101,13 +92,23 @@ spec:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
         branchName: add-${{ parameters.component_id }}
         title: 'feat: Add ${{ parameters.component_id }}'
-        description: 'Metadata for ${{ parameters.component_id }}'
-        sourcePath: metadata-output/${{ parameters.component_id }}.yaml
+        description: |
+          ## 🎉 Novo Componente: ${{ parameters.component_id }}
+          
+          **Sistema:** ${{ parameters.system }}
+          **Owner:** ${{ parameters.owner }}
+          **Descrição:** ${{ parameters.description }}
+          
+          ### 📁 Arquivo criado:
+          `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml`
+          
+          🚀 **Faça merge para aparecer no catálogo em até 1 minuto!**
+        sourcePath: catalog-info.yaml
         targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml
 
   output:
     links:
-      - title: Code Repository
+      - title: 📦 Code Repository
         url: ${{ steps['publish-code'].output.remoteUrl }}
-      - title: Metadata PR
+      - title: 👉 MERGE THIS PR NOW
         url: ${{ steps['publish-metadata'].output.remoteUrl }}
