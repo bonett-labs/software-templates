@@ -76,7 +76,7 @@ spec:
         repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
         defaultBranch: main
-        repoVisibility: internal
+        repoVisibility: public
     
     - id: fetch-metadata
       name: Prepare Metadata
