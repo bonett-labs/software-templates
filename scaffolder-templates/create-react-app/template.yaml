@@ -56,8 +56,11 @@ spec:
               - bonett-labs
 
   steps:
+    # ==========================================
+    # STEP 1: Criar CÓDIGO React (repo próprio)
+    # ==========================================
     - id: fetch-base
-      name: Fetch Template
+      name: Fetch Code Template
       action: fetch:template
       input:
         url: ./skeleton
@@ -66,7 +69,7 @@ spec:
           description: ${{ parameters.description }}
     
     - id: publish-code
-      name: Publish Code
+      name: Publish Code Repository
       action: publish:github
       input:
         repoUrl: ${{ parameters.repoUrl }}
@@ -74,25 +77,20 @@ spec:
         defaultBranch: main
         repoVisibility: private
     
+    # ==========================================
+    # STEP 2: Criar METADADOS (repo separado)
+    # ==========================================
     - id: fetch-metadata
-      name: Prepare Metadata
+      name: Prepare Metadata Only
       action: fetch:template
       input:
         url: ./metadata
-        targetPath: ./temp
+        targetPath: ./metadata-only
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
-    
-    - id: rename-metadata
-      name: Rename to Component Name
-      action: fs:rename
-      input:
-        files:
-          - from: ./temp/catalog-info.yaml
-            to: ./${{ parameters.component_id }}.yaml
     
     - id: publish-metadata
       name: Create Metadata PR
@@ -107,9 +105,9 @@ spec:
           **Sistema:** ${{ parameters.system }}
           **Owner:** ${{ parameters.owner }}
           
-          🚀 **Faça merge para aparecer no catálogo em até 1 minuto!**
-        sourcePath: .
-        targetPath: ${{ parameters.system | replace('system:default/', '') }}
+          🚀 Faça merge para aparecer no catálogo!
+        sourcePath: metadata-only/catalog-info.yaml
+        targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml
 
   output:
     links:
