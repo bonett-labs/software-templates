@@ -56,64 +56,64 @@ spec:
               - bonett-labs
 
   steps:
-  - id: fetch-base
-    name: Fetch Template
-    action: fetch:template
-    input:
-      url: ./skeleton
-      values:
-        component_id: ${{ parameters.component_id }}
+    - id: fetch-base
+      name: Fetch Template
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+    
+    - id: publish-code
+      name: Publish Code
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
-  
-  - id: publish-code
-    name: Publish Code
-    action: publish:github
-    input:
-      repoUrl: ${{ parameters.repoUrl }}
-      description: ${{ parameters.description }}
-      defaultBranch: main
-      repoVisibility: private
-  
-  - id: fetch-metadata
-    name: Prepare Metadata
-    action: fetch:template
-    input:
-      url: ./metadata
-      targetPath: ./temp
-      values:
-        component_id: ${{ parameters.component_id }}
-        description: ${{ parameters.description }}
-        owner: ${{ parameters.owner }}
-        system: ${{ parameters.system }}
-  
-  - id: rename-metadata
-    name: Rename to Component Name
-    action: fs:rename
-    input:
-      files:
-        - from: ./temp/catalog-info.yaml
-          to: ./${{ parameters.component_id }}.yaml
-  
-  - id: publish-metadata
-    name: Create Metadata PR
-    action: publish:github:pull-request
-    input:
-      repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-      branchName: add-${{ parameters.component_id }}
-      title: 'feat: Add ${{ parameters.component_id }}'
-      description: |
-        ## Novo Componente: ${{ parameters.component_id }}
-        
-        **Sistema:** ${{ parameters.system }}
-        **Owner:** ${{ parameters.owner }}
-        
-        🚀 **Faça merge para aparecer no catálogo em até 1 minuto!**
-      sourcePath: .
-      targetPath: ${{ parameters.system | replace('system:default/', '') }}
+        defaultBranch: main
+        repoVisibility: private
+    
+    - id: fetch-metadata
+      name: Prepare Metadata
+      action: fetch:template
+      input:
+        url: ./metadata
+        targetPath: ./temp
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
+    
+    - id: rename-metadata
+      name: Rename to Component Name
+      action: fs:rename
+      input:
+        files:
+          - from: ./temp/catalog-info.yaml
+            to: ./${{ parameters.component_id }}.yaml
+    
+    - id: publish-metadata
+      name: Create Metadata PR
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
+        branchName: add-${{ parameters.component_id }}
+        title: 'feat: Add ${{ parameters.component_id }}'
+        description: |
+          ## Novo Componente: ${{ parameters.component_id }}
+          
+          **Sistema:** ${{ parameters.system }}
+          **Owner:** ${{ parameters.owner }}
+          
+          🚀 **Faça merge para aparecer no catálogo em até 1 minuto!**
+        sourcePath: .
+        targetPath: ${{ parameters.system | replace('system:default/', '') }}
 
-output:
-  links:
-    - title: Code Repository
-      url: ${{ steps['publish-code'].output.remoteUrl }}
-    - title: 👉 MERGE THIS PR
-      url: ${{ steps['publish-metadata'].output.remoteUrl }}
+  output:
+    links:
+      - title: Code Repository
+        url: ${{ steps['publish-code'].output.remoteUrl }}
+      - title: 👉 MERGE THIS PR
+        url: ${{ steps['publish-metadata'].output.remoteUrl }}
