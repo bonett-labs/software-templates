@@ -212,22 +212,3 @@ spec:
       - title: 📦 Open in Catalog
         icon: catalog
         entityRef: ${{ steps['register'].output.entityRef }}
-```
-
----
-
-## 📁 **Estrutura de Pastas do Template**
-```
-templates/react-app-template/
-├── template.yaml                          ← Arquivo acima
-├── skeleton/                              ← Template do código React
-│   ├── package.json.hbs
-│   ├── src/
-│   │   ├── App.tsx
-│   │   └── index.tsx
-│   ├── .github/
-│   │   └── workflows/
-│   │       └── ci.yml
-│   └── README.md
-└── metadata-template/                     ← Template dos metadados
-    └── catalog-info.yaml
