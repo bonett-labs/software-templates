@@ -87,13 +87,15 @@ spec:
           system: ${{ parameters.system }}
     
     - id: publish-metadata
-      name: Push Metadata
-      action: publish:github
+      name: Create Metadata PR
+      action: publish:github:pull-request
       input:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
+        branchName: add-${{ parameters.component_id }}
+        title: 'feat: Add ${{ parameters.component_id }} metadata'
+        description: 'Adiciona metadados para o componente ${{ parameters.component_id }}'
         sourcePath: metadata-output
-        defaultBranch: main
-        gitCommitMessage: 'feat: Add ${{ parameters.component_id }} metadata'
+        targetPath: ${{ parameters.system }}/${{ parameters.component_id }}
 
   output:
     links:
