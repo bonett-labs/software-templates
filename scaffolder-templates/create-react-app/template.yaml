@@ -6,13 +6,12 @@ metadata:
   description: Cria um novo projeto React
   tags:
     - react
-    - frontend
 spec:
   owner: tribe-web-platforms
   type: website
   
   parameters:
-    - title: Informações do Projeto
+    - title: Informações
       required:
         - component_id
         - description
@@ -56,8 +55,8 @@ spec:
               - bonett-labs
 
   steps:
-    - id: fetch-base
-      name: Fetch Template
+    - id: fetch-code
+      name: Fetch Code
       action: fetch:template
       input:
         url: ./skeleton
@@ -75,45 +74,30 @@ spec:
         repoVisibility: private
     
     - id: fetch-metadata
-      name: Prepare Metadata
+      name: Fetch Metadata
       action: fetch:template
       input:
         url: ./metadata
-        targetPath: ./metadata-temp
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
     
-    - id: rename-metadata
-      name: Rename to Component Name
-      action: fs:rename
-      input:
-        files:
-          - from: ./metadata-temp/catalog-info.yaml
-            to: ./${{ parameters.component_id }}.yaml
-    
     - id: publish-metadata
-      name: Create Metadata PR
+      name: Publish Metadata
       action: publish:github:pull-request
       input:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
         branchName: add-${{ parameters.component_id }}
         title: 'feat: Add ${{ parameters.component_id }}'
-        description: |
-          ## Novo Componente: ${{ parameters.component_id }}
-          
-          **Sistema:** ${{ parameters.system }}
-          **Owner:** ${{ parameters.owner }}
-          
-          🚀 Faça merge para aparecer no catálogo!
-        sourcePath: ${{ parameters.component_id }}.yaml
+        description: 'Metadata for ${{ parameters.component_id }}'
+        sourcePath: catalog-info.yaml
         targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml
 
   output:
     links:
       - title: Code Repository
         url: ${{ steps['publish-code'].output.remoteUrl }}
-      - title: 👉 MERGE THIS PR
+      - title: Metadata PR
         url: ${{ steps['publish-metadata'].output.remoteUrl }}
