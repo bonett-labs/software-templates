@@ -1,39 +1,87 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: create-react-app-template
-  title: Create React App Template
-  description: Create a new CRA website project
+  name: react-app-template
+  title: React Application
+  description: Cria um novo projeto React com metadados centralizados
   tags:
     - react
-    - cra
+    - frontend
+    - web
 spec:
-  owner: web@example.com
+  owner: tribe-web-platforms
   type: website
+  
   parameters:
-    - title: Provide some simple information
+    - title: Informações do Projeto
       required:
         - component_id
+        - description
         - owner
+        - system
       properties:
         component_id:
-          title: Name
+          title: Nome do Componente
           type: string
-          description: Unique name of the component
+          description: Nome único (ex: customer-portal, admin-dashboard)
+          pattern: '^[a-z0-9-]+$'
           ui:field: EntityNamePicker
+          ui:autofocus: true
+        
         description:
-          title: Description
+          title: Descrição
           type: string
-          description: Help others understand what this website is for.
+          description: Breve descrição do propósito da aplicação
+        
         owner:
-          title: Owner
+          title: Time Responsável
           type: string
-          description: Owner of the component
+          description: Time que será dono do componente
           ui:field: OwnerPicker
           ui:options:
-            allowedKinds:
-              - Group
-    - title: Choose a location
+            catalogFilter:
+              kind: Group
+              spec.type: team
+        
+        system:
+          title: Sistema
+          type: string
+          description: Sistema ao qual este componente pertence
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: System
+          default: web-platform
+    
+    - title: Configurações Técnicas
+      properties:
+        lifecycle:
+          title: Lifecycle
+          type: string
+          description: Estágio do ciclo de vida
+          default: experimental
+          enum:
+            - experimental
+            - production
+            - deprecated
+          enumNames:
+            - Experimental
+            - Production
+            - Deprecated
+        
+        typescript:
+          title: Usar TypeScript?
+          type: boolean
+          default: true
+          description: Criar projeto com TypeScript
+        
+        router:
+          title: Incluir React Router?
+          type: boolean
+          default: true
+          description: Adicionar React Router para navegação
+    
+    - title: Localização do Repositório
       required:
         - repoUrl
       properties:
@@ -44,9 +92,15 @@ spec:
           ui:options:
             allowedHosts:
               - github.com
+            allowedOwners:
+              - bonett-labs
+
   steps:
-    - id: template
-      name: Fetch Skeleton + Template
+    # ============================================
+    # STEP 1: Fetch Template Base (código React)
+    # ============================================
+    - id: fetch-base
+      name: Fetch Base React Template
       action: fetch:template
       input:
         url: ./skeleton
@@ -55,27 +109,125 @@ spec:
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
-          destination: ${{ parameters.repoUrl | parseRepoUrl }}
           owner: ${{ parameters.owner }}
-
+          system: ${{ parameters.system }}
+          lifecycle: ${{ parameters.lifecycle }}
+          typescript: ${{ parameters.typescript }}
+          router: ${{ parameters.router }}
+          destination: ${{ parameters.repoUrl | parseRepoUrl }}
+    
+    # ============================================
+    # STEP 2: Publicar CÓDIGO no GitHub
+    # ============================================
     - id: publish
-      name: Publish
+      name: Publish Code to GitHub
       action: publish:github
       input:
-        description: This is ${{ parameters.component_id }}
         repoUrl: ${{ parameters.repoUrl }}
-
+        description: ${{ parameters.description }}
+        defaultBranch: main
+        repoVisibility: internal
+        deleteBranchOnMerge: true
+        gitAuthorName: BonettTech Bot
+        gitAuthorEmail: bot@bonetttech.com
+        topics:
+          - react
+          - frontend
+          - backstage-generated
+    
+    # ============================================
+    # STEP 3: Criar METADADOS em Repo Separado
+    # ============================================
+    - id: fetch-metadata-template
+      name: Prepare Metadata
+      action: fetch:template
+      input:
+        url: ./metadata-template
+        targetPath: ./metadata
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
+          lifecycle: ${{ parameters.lifecycle }}
+          repo_owner: ${{ (parameters.repoUrl | parseRepoUrl).owner }}
+          repo_name: ${{ (parameters.repoUrl | parseRepoUrl).repo }}
+    
+    - id: publish-metadata
+      name: Publish Metadata to Components Repo
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=bonett-labs&repo=bonettech-zentry-components
+        sourcePath: ./metadata
+        targetPath: ${{ parameters.system }}/${{ parameters.component_id }}
+        commitMessage: 'feat: Add metadata for ${{ parameters.component_id }}'
+        gitAuthorName: BonettTech Bot
+        gitAuthorEmail: bot@bonetttech.com
+    
+    # ============================================
+    # STEP 4: Registrar no Catálogo
+    # ============================================
     - id: register
-      name: Register
+      name: Register in Catalog
       action: catalog:register
       input:
-        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
-        catalogInfoPath: "/catalog-info.yaml"
+        repoContentsUrl: https://github.com/bonett-labs/bonettech-zentry-components/tree/main/${{ parameters.system }}/${{ parameters.component_id }}
+        catalogInfoPath: '/catalog-info.yaml'
+    
+    # ============================================
+    # STEP 5: Criar Pull Request Inicial
+    # ============================================
+    - id: create-pr
+      name: Create Initial PR
+      action: github:repo:createPullRequest
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        title: 'docs: Add initial documentation'
+        body: |
+          ## 📚 Initial Setup
+          
+          This PR adds initial documentation and configuration:
+          - README with setup instructions
+          - GitHub Actions workflow
+          - Code quality tools configured
+          
+          **Created by Backstage Scaffolder**
+          
+          Component: `${{ parameters.component_id }}`
+          System: `${{ parameters.system }}`
+          Owner: `${{ parameters.owner }}`
+        branchName: docs/initial-setup
+        targetBranchName: main
 
   output:
     links:
-      - title: Repository
-        url: ${{ steps.publish.output.remoteUrl }}
-      - title: Open in catalog
+      - title: 🔗 Repository (Code)
+        url: ${{ steps['publish'].output.remoteUrl }}
+      - title: 📄 Metadata (Catalog)
+        url: https://github.com/bonett-labs/bonettech-zentry-components/tree/main/${{ parameters.system }}/${{ parameters.component_id }}
+      - title: 🚀 GitHub Actions
+        url: ${{ steps['publish'].output.remoteUrl }}/actions
+      - title: 🔀 Pull Request
+        url: ${{ steps['create-pr'].output.pullRequestUrl }}
+      - title: 📦 Open in Catalog
         icon: catalog
-        entityRef: ${{ steps.register.output.entityRef }}
+        entityRef: ${{ steps['register'].output.entityRef }}
+```
+
+---
+
+## 📁 **Estrutura de Pastas do Template**
+```
+templates/react-app-template/
+├── template.yaml                          ← Arquivo acima
+├── skeleton/                              ← Template do código React
+│   ├── package.json.hbs
+│   ├── src/
+│   │   ├── App.tsx
+│   │   └── index.tsx
+│   ├── .github/
+│   │   └── workflows/
+│   │       └── ci.yml
+│   └── README.md
+└── metadata-template/                     ← Template dos metadados
+    └── catalog-info.yaml
