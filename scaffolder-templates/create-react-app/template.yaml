@@ -117,13 +117,3 @@ output:
       url: ${{ steps['publish-code'].output.remoteUrl }}
     - title: 👉 MERGE THIS PR
       url: ${{ steps['publish-metadata'].output.remoteUrl }}
-
-  output:
-    links:
-      - title: Code Repository
-        url: ${{ steps['publish-code'].output.remoteUrl }}
-      - title: Metadata PR
-        url: ${{ steps['publish-metadata'].output.remoteUrl }}
-      - title: View in Catalog
-        icon: catalog
-        entityRef: ${{ steps['register'].output.entityRef }}
