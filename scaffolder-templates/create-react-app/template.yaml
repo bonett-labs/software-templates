@@ -1,64 +1,127 @@
-steps:
-  - id: fetch-base
-    name: Fetch Template
-    action: fetch:template
-    input:
-      url: ./skeleton
-      values:
-        component_id: ${{ parameters.component_id }}
-        description: ${{ parameters.description }}
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: react-app-template
+  title: React Application
+  description: Cria um novo projeto React com metadados centralizados
+  tags:
+    - react
+    - frontend
+    - web
+spec:
+  owner: tribe-web-platforms
+  type: website
   
-  - id: publish-code
-    name: Publish Code
-    action: publish:github
-    input:
-      repoUrl: ${{ parameters.repoUrl }}
-      description: ${{ parameters.description }}
-      defaultBranch: main
-      repoVisibility: private
-  
-  - id: fetch-metadata
-    name: Prepare Metadata
-    action: fetch:template
-    input:
-      url: ./metadata
-      targetPath: ./metadata-output
-      values:
-        component_id: ${{ parameters.component_id }}
-        description: ${{ parameters.description }}
-        owner: ${{ parameters.owner }}
-        system: ${{ parameters.system }}
-  
-  - id: rename-metadata
-    name: Rename Metadata File
-    action: fs:rename
-    input:
-      files:
-        - from: ./metadata-output/catalog-info.yaml
-          to: ./metadata-output/${{ parameters.component_id }}.yaml
-  
-  - id: publish-metadata
-  name: Push Metadata Directly
-  action: publish:github
-  input:
-    repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-    sourcePath: metadata-output
-    targetBranch: main
-    gitCommitMessage: 'feat: Add ${{ parameters.component_id }} metadata'
+  parameters:
+    - title: Informações do Projeto
+      required:
+        - component_id
+        - description
+        - owner
+        - system
+      properties:
+        component_id:
+          title: Nome do Componente
+          type: string
+          description: Nome único do componente
+          ui:field: EntityNamePicker
+        
+        description:
+          title: Descrição
+          type: string
+          description: Breve descrição do propósito
+        
+        owner:
+          title: Time Responsável
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        
+        system:
+          title: Sistema
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind: System
+    
+    - title: Localização do Repositório
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+            allowedOwners:
+              - bonett-labs
 
-  - id: register
-    name: Register in Catalog
-    action: catalog:register
-    input:
-      repoContentsUrl: https://github.com/bonett-labs/bonettech-zentry-components
-      catalogInfoPath: /${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml
+  steps:
+    - id: fetch-base
+      name: Fetch Template
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+    
+    - id: publish-code
+      name: Publish Code
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        description: ${{ parameters.description }}
+        defaultBranch: main
+        repoVisibility: private
+    
+    - id: fetch-metadata
+      name: Prepare Metadata
+      action: fetch:template
+      input:
+        url: ./metadata
+        targetPath: ./metadata-output
+        values:
+          component_id: ${{ parameters.component_id }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
+    
+    - id: rename-metadata
+      name: Rename Metadata File
+      action: fs:rename
+      input:
+        files:
+          - from: ./metadata-output/catalog-info.yaml
+            to: ./metadata-output/${{ parameters.component_id }}.yaml
+    
+    - id: publish-metadata
+      name: Push Metadata Directly
+      action: publish:github
+      input:
+        repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
+        sourcePath: metadata-output
+        targetBranch: main
+        gitCommitMessage: 'feat: Add ${{ parameters.component_id }} metadata'
+    
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: https://github.com/bonett-labs/bonettech-zentry-components
+        catalogInfoPath: /${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml
 
-output:
-  links:
-    - title: Code Repository
-      url: ${{ steps['publish-code'].output.remoteUrl }}
-    - title: Metadata PR
-      url: ${{ steps['publish-metadata'].output.remoteUrl }}
-    - title: View in Catalog
-      icon: catalog
-      entityRef: ${{ steps['register'].output.entityRef }}
+  output:
+    links:
+      - title: Code Repository
+        url: ${{ steps['publish-code'].output.remoteUrl }}
+      - title: Metadata Location
+        url: https://github.com/bonett-labs/bonettech-zentry-components/tree/main/${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}
+      - title: View in Catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}
