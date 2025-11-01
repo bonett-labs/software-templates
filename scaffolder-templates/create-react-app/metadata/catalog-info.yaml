@@ -5,6 +5,16 @@ metadata:
   description: ${{ values.description }}
   annotations:
     github.com/project-slug: bonett-labs/${{ values.component_id }}
+    backstage.io/techdocs-ref: dir:.
+    backstage.io/source-location: url:https://github.com/bonett-labs/${{ values.component_id }}
+  links:
+    - url: https://github.com/bonett-labs/${{ values.component_id }}
+      title: GitHub Repository
+      icon: github
+  tags:
+    - react
+    - typescript
+    - frontend
 spec:
   type: website
   lifecycle: experimental
