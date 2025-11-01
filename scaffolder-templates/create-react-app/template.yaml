@@ -56,40 +56,67 @@ spec:
               - bonett-labs
   
   steps:
-    - id: fetch-code
-      name: Fetch Code Template
+    # Step 1: Buscar o template do código React
+    - id: fetch-template
+      name: Buscar Template
       action: fetch:template
       input:
         url: ./skeleton
-        targetPath: ./code-output  # ← ADICIONADO
+        targetPath: template
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
     
-    - id: publish-code
-      name: Publish Code Repository
+    # Step 2: Publicar o repositório no GitHub
+    - id: publish
+      name: Publicar repositório no GitHub
       action: publish:github
       input:
-        sourcePath: ./code-output  # ← ADICIONADO
+        sourcePath: ./template
         repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: private
     
+    # Step 3: Aguardar alguns segundos
+    - id: wait-3sec
+      action: debug:wait
+      name: Espera
+      input:
+        seconds: 3
+    
+    # Step 4: Preparar arquivo de metadata
     - id: fetch-metadata
-      name: Fetch Metadata Template
+      name: Prepare Metadata
       action: fetch:template
       input:
         url: ./metadata
-        targetPath: ./metadata-output  # ← ADICIONADO
+        targetPath: ./metadata-output
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
     
+    # Step 5: Renomear e organizar arquivo de metadata
+    - id: rename-metadata
+      name: Rename Metadata File
+      action: fs:rename
+      input:
+        files:
+          - from: ./metadata-output/catalog-info.yaml
+            to: ./metadata-output/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml
+    
+    # Step 6: Log para debug
+    - id: debug-log-metadata
+      name: Log Metadata Path
+      action: debug:log
+      input:
+        message: 'Arquivo de metadata gerado: metadata-output/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml'
+    
+    # Step 7: Criar Pull Request com o metadata
     - id: publish-metadata
-      name: Create Metadata PR
+      name: Criar Metadata PR
       action: publish:github:pull-request
       input:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
@@ -106,12 +133,12 @@ spec:
           `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml`
           
           🚀 **Faça merge para aparecer no catálogo em até 1 minuto!**
-        sourcePath: ./metadata-output/catalog-info.yaml  # ← CORRIGIDO
-        targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml
+        sourcePath: metadata-output/${{ parameters.component_id }}
+        targetPath: ${{ parameters.system | replace('system:default/', '') }}
   
   output:
     links:
       - title: 📦 Code Repository
-        url: ${{ steps['publish-code'].output.remoteUrl }}
+        url: ${{ steps['publish'].output.remoteUrl }}
       - title: 👉 MERGE THIS PR NOW
         url: ${{ steps['publish-metadata'].output.remoteUrl }}
