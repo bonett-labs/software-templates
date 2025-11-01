@@ -54,13 +54,14 @@ spec:
               - github.com
             allowedOwners:
               - bonett-labs
-
+  
   steps:
     - id: fetch-code
       name: Fetch Code Template
       action: fetch:template
       input:
         url: ./skeleton
+        targetPath: ./code-output  # ← ADICIONADO
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
@@ -69,6 +70,7 @@ spec:
       name: Publish Code Repository
       action: publish:github
       input:
+        sourcePath: ./code-output  # ← ADICIONADO
         repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
         defaultBranch: main
@@ -79,6 +81,7 @@ spec:
       action: fetch:template
       input:
         url: ./metadata
+        targetPath: ./metadata-output  # ← ADICIONADO
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
@@ -103,9 +106,9 @@ spec:
           `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml`
           
           🚀 **Faça merge para aparecer no catálogo em até 1 minuto!**
-        sourcePath: catalog-info.yaml
+        sourcePath: ./metadata-output/catalog-info.yaml  # ← CORRIGIDO
         targetPath: ${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml
-
+  
   output:
     links:
       - title: 📦 Code Repository
