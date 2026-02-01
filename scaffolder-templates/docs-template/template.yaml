@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: manipulacao-arquivos-yaml
   title: Manipulate YAML
-  description: Treino para manipular arquivos .yaml/.yml a partir de formulários (repo do componente + PR de metadata central)
+  description: Repo do componente + PR de catalog-info.yaml em repositório central
   tags:
     - yaml
     - yml
@@ -56,50 +56,76 @@ spec:
           ui:options:
             rows: 4
 
-    steps:
-    - id: fetch-component
-      name: Renderizar skeleton do componente
+    - title: Repositório do componente
+      required: [repoUrl]
+      properties:
+        repoUrl:
+          title: Repo URL
+          type: string
+          description: "Ex: github.com?owner=bonett-labs&repo=billing-api"
+
+  steps:
+    # Step 1: Renderiza o skeleton do componente em ./template
+    - id: fetch-template
+      name: Buscar Template (componente)
       action: fetch:template
       input:
         url: ./skeleton
+        targetPath: template
         values:
+          component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
 
-    - id: publish-component
-      name: Publicar repositório do componente
+    # Step 2: Publica o repositório do componente
+    - id: publish
+      name: Publicar repositório no GitHub
       action: publish:github
       input:
-        repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
+        sourcePath: ./template
+        repoUrl: ${{ parameters.repoUrl }}
+        description: ${{ parameters.description }}
         defaultBranch: main
-        sourcePath: .
+        repoVisibility: private
 
+    # Step 3: (opcional) pequena espera
+    - id: wait-2sec
+      action: debug:wait
+      name: Espera
+      input:
+        seconds: 2
+
+    # Step 4: Renderiza metadata em ./metadata-output a partir de ./metadata (modelo que funciona)
     - id: fetch-metadata
-      name: Renderizar metadata (na pasta do sistema)
+      name: Prepare Metadata (catálogo central)
       action: fetch:template
       input:
-        url: ./skeleton
-        targetPath: ./metadata-output/${{ parameters.system | replace('system:default/', '') }}
+        url: ./metadata
+        targetPath: ./metadata-output
         values:
+          component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
+          system_slug: ${{ parameters.system | replace('system:default/', '') }}
 
+    # Step 5: Renomeia e organiza para <component>/<component>.yaml (local)
     - id: rename-metadata
-      name: Renomear catalog-info.yaml para <component>.yaml
+      name: Rename Metadata File
       action: fs:rename
       input:
         files:
-          - from: ./metadata-output/${{ parameters.system | replace('system:default/', '') }}/catalog-info.yaml
-            to: ./metadata-output/${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml
+          - from: ./metadata-output/catalog-info.yaml
+            to: ./metadata-output/${{ parameters.name }}/${{ parameters.name }}.yaml
 
+    # Step 6: Abre PR no repo central, colocando em <system_slug>/<component>.yaml
     - id: publish-metadata
-      name: Criar PR de metadata no repositório central
+      name: Criar Metadata PR (repo central)
       action: publish:github:pull-request
       input:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
@@ -114,11 +140,14 @@ spec:
 
           ### 📁 Arquivo criado:
           `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml`
-        sourcePath: ./metadata-output
+
+          🚀 Faça merge para aparecer no catálogo.
+        sourcePath: metadata-output/${{ parameters.name }}
+        targetPath: ${{ parameters.system | replace('system:default/', '') }}
 
   output:
     links:
-      - title: Repositório do componente
-        url: ${{ steps.publish-component.output.remoteUrl }}
-      - title: Pull Request (catálogo central)
-        url: ${{ steps.publish-metadata.output.remoteUrl }}/pull/${{ steps.publish-metadata.output.pullRequestNumber }}
+      - title: 📦 Code Repository
+        url: ${{ steps.publish.output.remoteUrl }}
+      - title: 👉 Pull Request (catálogo central)
+        url: ${{ steps['publish-metadata'].output.remoteUrl }}/pull/${{ steps['publish-metadata'].output.pullRequestNumber }}
