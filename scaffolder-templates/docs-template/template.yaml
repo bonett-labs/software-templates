@@ -11,66 +11,66 @@ spec:
   owner: tribe-web-platforms
   type: website
 
-parameters:
-  - title: Identidade do Componente
-    required: [owner, domain, system]
-    properties:
-      owner:
-        title: Dono (Grupo)
-        type: string
-        ui:field: OwnerPicker
-        ui:options:
-          catalogFilter:
-            - kind: Group
-
-      domain:
-        title: Domínio de Negócio
-        type: string
-        ui:field: EntityPicker
-        ui:options:
-          catalogFilter:
-            - kind: Domain
-
-      system:
-        title: Sistema
-        type: string
-        ui:field: EntityPicker
-        ui:options:
-          catalogFilter:
-            - kind: System
-
-  - title: Dados do Componente
-    required: [name, description]
-    properties:
-      name:
-        title: Nome
-        type: string
-        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-
-      description:
-        title: Descrição do componente
-        type: string
-        ui:widget: textarea
-        ui:options:
-          rows: 4
-steps:
-  - id: fetch
-    name: Renderizar skeleton (preencher YAMLs)
-    action: fetch:template
-    input:
-      url: ./skeleton
-      values:
-        name: ${{ parameters.name }}
-        description: ${{ parameters.description }}
-        owner: ${{ parameters.owner }}
-        domain: ${{ parameters.domain }}
-        system: ${{ parameters.system }}
-
-  - id: publish
-    name: Publicar no GitHub
-    action: publish:github
-    input:
-      repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
-      defaultBranch: main
-      sourcePath: .
-
+  parameters:
+    - title: Identidade do Componente
+      required: [owner, domain, system]
+      properties:
+        owner:
+          title: Dono (Grupo)
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              - kind: Group
+  
+        domain:
+          title: Domínio de Negócio
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              - kind: Domain
+  
+        system:
+          title: Sistema
+          type: string
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              - kind: System
+  
+    - title: Dados do Componente
+      required: [name, description]
+      properties:
+        name:
+          title: Nome
+          type: string
+          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+  
+        description:
+          title: Descrição do componente
+          type: string
+          ui:widget: textarea
+          ui:options:
+            rows: 4
+  steps:
+    - id: fetch
+      name: Renderizar skeleton (preencher YAMLs)
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          domain: ${{ parameters.domain }}
+          system: ${{ parameters.system }}
+  
+    - id: publish
+      name: Publicar no GitHub
+      action: publish:github
+      input:
+        repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
+        defaultBranch: main
+        sourcePath: .
+  
