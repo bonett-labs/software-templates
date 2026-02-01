@@ -120,11 +120,11 @@ spec:
           `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml`
 
           🚀 Faça merge para aparecer no catálogo.
-        sourcePath: ./metadata-output
+        sourcePath: ${{ parameters.system | replace('system:default/', '') }}
 
   output:
     links:
-      - title: Repositório do componente
-        url: ${{ steps.publish-component.output.remoteUrl }}
-      - title: Pull Request (catálogo central)
-        url: ${{ steps.publish-metadata.output.remoteUrl }}
+      - title: 📦 Code Repository
+        url: ${{ steps['publish-component'].output.repoUrl }}
+      - title: 👉 MERGE THIS PR NOW
+        url: ${{ steps['publish-metadata'].output.repoUrl }}
