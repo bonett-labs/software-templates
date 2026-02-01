@@ -142,5 +142,5 @@ spec:
       - title: 📦 Code Repository
         url: ${{ steps.publish.output.remoteUrl }}
       - title: 👉 Pull Request (catálogo central)
-        url: ${{ steps['publish-metadata'].output.remoteUrl }}/pull/${{ steps['publish-metadata'].output.pullRequestNumber }}
+        url: ${{ steps['publish-metadata'].output.remoteUrl }}
 
