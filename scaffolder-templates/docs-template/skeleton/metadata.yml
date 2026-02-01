@@ -1,0 +1,6 @@
+component:
+  name: ${{ values.name }}
+  owner: ${{ values.owner }}
+  domain: ${{ values.domain }}
+  system: ${{ values.system }}
+  description: ${{ values.description }}
