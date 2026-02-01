@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: manipulacao-arquivos-yaml
   title: Manipulate YAML
-  description: Treino para manipular arquivos .yaml/.yml a partir de formulários
+  description: Treino para manipular arquivos .yaml/.yml a partir de formulários (repo do componente + PR de metadata central)
   tags:
     - yaml
     - yml
@@ -44,7 +44,7 @@ spec:
       required: [name, description]
       properties:
         name:
-          title: Nome
+          title: Nome (component_id)
           type: string
           pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           description: "Use kebab-case, ex: billing-api"
@@ -57,8 +57,9 @@ spec:
             rows: 4
 
   steps:
-    - id: fetch
-      name: Renderizar skeleton (preencher YAMLs)
+    # 1) Repo do componente
+    - id: fetch-component
+      name: Renderizar skeleton do componente
       action: fetch:template
       input:
         url: ./skeleton
@@ -69,15 +70,61 @@ spec:
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
 
-    - id: publish
-      name: Publicar no GitHub
+    - id: publish-component
+      name: Publicar repositório do componente
       action: publish:github
       input:
         repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
         defaultBranch: main
         sourcePath: .
 
+    # 2) Reusa o MESMO skeleton, mas só para gerar metadata localmente
+    - id: fetch-metadata
+      name: Renderizar skeleton novamente (para extrair catalog-info.yaml)
+      action: fetch:template
+      input:
+        url: ./skeleton
+        targetPath: ./metadata-output
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          domain: ${{ parameters.domain }}
+          system: ${{ parameters.system }}
+
+    # 3) Move/renomeia o catalog-info.yaml para o formato <system_slug>/<component_id>.yaml
+    - id: rename-metadata
+      name: Organizar arquivo de metadata
+      action: fs:rename
+      input:
+        files:
+          - from: ./metadata-output/catalog-info.yaml
+            to: ./metadata-output/${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml
+
+    # 4) PR no repo centralizado
+    - id: publish-metadata
+      name: Criar PR de metadata no repositório central
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
+        branchName: add-${{ parameters.name }}
+        title: "feat: Add ${{ parameters.name }}"
+        description: |
+          ## 🎉 Novo Componente: ${{ parameters.name }}
+
+          **Sistema:** ${{ parameters.system }}
+          **Owner:** ${{ parameters.owner }}
+          **Descrição:** ${{ parameters.description }}
+
+          ### 📁 Arquivo criado:
+          `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml`
+
+          🚀 Faça merge para aparecer no catálogo.
+        sourcePath: ./metadata-output
+
   output:
     links:
-      - title: Repositório
-        url: ${{ steps.publish.output.remoteUrl }}
+      - title: Repositório do componente
+        url: ${{ steps.publish-component.output.remoteUrl }}
+      - title: Pull Request (catálogo central)
+        url: ${{ steps.publish-metadata.output.remoteUrl }}
