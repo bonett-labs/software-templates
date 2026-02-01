@@ -56,8 +56,7 @@ spec:
           ui:options:
             rows: 4
 
-  steps:
-    # 1) Repo do componente
+    steps:
     - id: fetch-component
       name: Renderizar skeleton do componente
       action: fetch:template
@@ -78,13 +77,12 @@ spec:
         defaultBranch: main
         sourcePath: .
 
-    # 2) Reusa o MESMO skeleton, mas só para gerar metadata localmente
     - id: fetch-metadata
-      name: Renderizar skeleton novamente (para extrair catalog-info.yaml)
+      name: Renderizar metadata (na pasta do sistema)
       action: fetch:template
       input:
         url: ./skeleton
-        targetPath: ./metadata-output
+        targetPath: ./metadata-output/${{ parameters.system | replace('system:default/', '') }}
         values:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
@@ -92,16 +90,14 @@ spec:
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
 
-    # 3) Move/renomeia o catalog-info.yaml para o formato <system_slug>/<component_id>.yaml
     - id: rename-metadata
-      name: Organizar arquivo de metadata
+      name: Renomear catalog-info.yaml para <component>.yaml
       action: fs:rename
       input:
         files:
-          - from: ./metadata-output/catalog-info.yaml
+          - from: ./metadata-output/${{ parameters.system | replace('system:default/', '') }}/catalog-info.yaml
             to: ./metadata-output/${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml
 
-    # 4) PR no repo centralizado
     - id: publish-metadata
       name: Criar PR de metadata no repositório central
       action: publish:github:pull-request
@@ -118,13 +114,11 @@ spec:
 
           ### 📁 Arquivo criado:
           `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml`
-
-          🚀 Faça merge para aparecer no catálogo.
-        sourcePath: ${{ parameters.system | replace('system:default/', '') }}
+        sourcePath: ./metadata-output
 
   output:
     links:
-      - title: 📦 Code Repository
-        url: ${{ steps['publish-component'].output.repoUrl }}
-      - title: 👉 MERGE THIS PR NOW
-        url: ${{ steps['publish-metadata'].output.repoUrl }}
+      - title: Repositório do componente
+        url: ${{ steps.publish-component.output.remoteUrl }}
+      - title: Pull Request (catálogo central)
+        url: ${{ steps.publish-metadata.output.remoteUrl }}/pull/${{ steps.publish-metadata.output.pullRequestNumber }}
