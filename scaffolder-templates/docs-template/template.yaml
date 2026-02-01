@@ -1,12 +1,13 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: manipulação-arquivos-yaml
-  title: Manipulate yaml
-  description: Treino Para manipular arquivos .yaml . yml
+  name: manipulacao-arquivos-yaml
+  title: Manipulate YAML
+  description: Treino para manipular arquivos .yaml/.yml a partir de formulários
   tags:
     - yaml
     - yml
+
 spec:
   owner: tribe-web-platforms
   type: website
@@ -22,7 +23,7 @@ spec:
           ui:options:
             catalogFilter:
               - kind: Group
-  
+
         domain:
           title: Domínio de Negócio
           type: string
@@ -30,7 +31,7 @@ spec:
           ui:options:
             catalogFilter:
               - kind: Domain
-  
+
         system:
           title: Sistema
           type: string
@@ -38,7 +39,7 @@ spec:
           ui:options:
             catalogFilter:
               - kind: System
-  
+
     - title: Dados do Componente
       required: [name, description]
       properties:
@@ -46,13 +47,15 @@ spec:
           title: Nome
           type: string
           pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-  
+          description: "Use kebab-case, ex: billing-api"
+
         description:
           title: Descrição do componente
           type: string
           ui:widget: textarea
           ui:options:
             rows: 4
+
   steps:
     - id: fetch
       name: Renderizar skeleton (preencher YAMLs)
@@ -65,7 +68,7 @@ spec:
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
-  
+
     - id: publish
       name: Publicar no GitHub
       action: publish:github
@@ -73,4 +76,8 @@ spec:
         repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
         defaultBranch: main
         sourcePath: .
-  
+
+  output:
+    links:
+      - title: Repositório
+        url: ${{ steps.publish.output.remoteUrl }}
