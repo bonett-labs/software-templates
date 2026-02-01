@@ -56,14 +56,6 @@ spec:
           ui:options:
             rows: 4
 
-    - title: Repositório do componente
-      required: [repoUrl]
-      properties:
-        repoUrl:
-          title: Repo URL
-          type: string
-          description: "Ex: github.com?owner=bonett-labs&repo=billing-api"
-
   steps:
     # Step 1: Renderiza o skeleton do componente em ./template
     - id: fetch-template
@@ -86,7 +78,7 @@ spec:
       action: publish:github
       input:
         sourcePath: ./template
-        repoUrl: ${{ parameters.repoUrl }}
+        repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: private
@@ -151,3 +143,4 @@ spec:
         url: ${{ steps.publish.output.remoteUrl }}
       - title: 👉 Pull Request (catálogo central)
         url: ${{ steps['publish-metadata'].output.remoteUrl }}/pull/${{ steps['publish-metadata'].output.pullRequestNumber }}
+
