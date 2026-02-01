@@ -1,12 +1,11 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: ${{values.name | dump}}
-  description: ${{values.description | dump}}
-  annotations:
-    github.com/project-slug: ${{values.destination.owner + "/" + values.destination.repo}}
-    backstage.io/techdocs-ref: dir:.
+  name: ${{ values.name }}
+  description: ${{ values.description }}
 spec:
-  type: documentation
-  lifecycle: experimental
-  owner: ${{values.owner | dump}}
+  type: website
+  lifecycle: production
+  owner: ${{ values.owner }}
+  system: ${{ values.system }}
+  domain: ${{ values.domain }}
