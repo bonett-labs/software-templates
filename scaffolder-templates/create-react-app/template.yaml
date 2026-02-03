@@ -10,7 +10,7 @@ metadata:
 spec:
   owner: tribe-web-platforms
   type: website
-  
+
   parameters:
     - title: Informações do Projeto
       required:
@@ -40,7 +40,7 @@ spec:
           ui:options:
             catalogFilter:
               kind: System
-    
+
     - title: Localização
       required:
         - repoUrl
@@ -54,7 +54,7 @@ spec:
               - github.com
             allowedOwners:
               - bonett-labs
-  
+
   steps:
     # Step 1: Buscar o template do código React
     - id: fetch-template
@@ -66,8 +66,16 @@ spec:
         values:
           component_id: ${{ parameters.component_id }}
           description: ${{ parameters.description }}
-    
-    # Step 2: Publicar o repositório no GitHub
+
+    # Step 2: Baixar o workflow de DevOps do repo de templates
+    - id: fetch-devops-yaml
+      name: Baixar devops-python.yaml
+      action: fetch:plain
+      input:
+        url: http://192.168.100.8:5000/github/contents/bonett-labs/zentry-workflows-template/python/devops-python.yaml?ref=main&raw=1
+        targetPath: template/.github/workflows/devops-python.yaml
+
+    # Step 3: Publicar o repositório no GitHub
     - id: publish
       name: Publicar repositório no GitHub
       action: publish:github
@@ -77,15 +85,15 @@ spec:
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: private
-    
-    # Step 3: Aguardar alguns segundos
+
+    # Step 4: Aguardar alguns segundos
     - id: wait-3sec
       action: debug:wait
       name: Espera
       input:
         seconds: 3
-    
-    # Step 4: Preparar arquivo de metadata
+
+    # Step 5: Preparar arquivo de metadata
     - id: fetch-metadata
       name: Prepare Metadata
       action: fetch:template
@@ -97,8 +105,8 @@ spec:
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
-    
-    # Step 5: Renomear e organizar arquivo de metadata
+
+    # Step 6: Renomear e organizar arquivo de metadata
     - id: rename-metadata
       name: Rename Metadata File
       action: fs:rename
@@ -106,36 +114,36 @@ spec:
         files:
           - from: ./metadata-output/catalog-info.yaml
             to: ./metadata-output/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml
-    
-    # Step 6: Log para debug
+
+    # Step 7: Log para debug
     - id: debug-log-metadata
       name: Log Metadata Path
       action: debug:log
       input:
-        message: 'Arquivo de metadata gerado: metadata-output/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml'
-    
-    # Step 7: Criar Pull Request com o metadata
+        message: "Arquivo de metadata gerado: metadata-output/${{ parameters.component_id }}/${{ parameters.component_id }}.yaml"
+
+    # Step 8: Criar Pull Request com o metadata
     - id: publish-metadata
       name: Criar Metadata PR
       action: publish:github:pull-request
       input:
         repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
         branchName: add-${{ parameters.component_id }}
-        title: 'feat: Add ${{ parameters.component_id }}'
+        title: "feat: Add ${{ parameters.component_id }}"
         description: |
           ## 🎉 Novo Componente: ${{ parameters.component_id }}
-          
+
           **Sistema:** ${{ parameters.system }}
           **Owner:** ${{ parameters.owner }}
           **Descrição:** ${{ parameters.description }}
-          
+
           ### 📁 Arquivo criado:
           `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.component_id }}.yaml`
-          
+
           🚀 **Faça merge para aparecer no catálogo em até 1 minuto!**
         sourcePath: metadata-output/${{ parameters.component_id }}
         targetPath: ${{ parameters.system | replace('system:default/', '') }}
-  
+
   output:
     links:
       - title: 📦 Code Repository
