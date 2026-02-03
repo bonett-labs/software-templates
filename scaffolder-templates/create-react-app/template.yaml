@@ -72,7 +72,7 @@ spec:
       name: Baixar devops-python.yaml
       action: fetch:plain
       input:
-        url: /api/proxy/zentry-internal/github/contents/bonett-labs/zentry-workflows-template/python/devops-python.yaml?ref=main&raw=1
+        url: /api/proxy/zentry-internal/github/contents/bonett-labs/zentry-workflows-templates/python/devops-python.yaml?ref=main&raw=1
         targetPath: template/.github/workflows/devops-python.yaml
 
     # Step 3: Publicar o repositório no GitHub
