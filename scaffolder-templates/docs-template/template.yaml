@@ -1,146 +1,205 @@
-apiVersion: scaffolder.backstage.io/v1beta3
-kind: Template
-metadata:
-  name: manipulacao-arquivos-yaml
-  title: Manipulate YAML
-  description: Repo do componente + PR de catalog-info.yaml em repositório central
-  tags:
-    - yaml
-    - yml
+# ============================================
+# SISTEMAS - BONETTTECH
+# ============================================
 
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: mp-mobile-platform
+  title: Mobile Platform
+  description: Plataforma de aplicativos mobile iOS e Android
+  tags:
+    - system
+    - mobile
+  links:
+    - url: https://app.bonetttech.com
+      title: App Store
+      icon: mobile
+    - url: https://play.google.com/store/apps/details?id=com.bonetttech
+      title: Play Store
+      icon: mobile
+spec:
+  owner: tribe-mobile-apps
+  domain: customer-experience
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: wp-web-platform
+  title: Web Platform
+  description: Plataforma web com portal do cliente e dashboard administrativo
+  tags:
+    - system
+    - web
+    - frontend
+  links:
+    - url: https://portal.bonetttech.com
+      title: Customer Portal
+      icon: dashboard
+    - url: https://admin.bonetttech.com
+      title: Admin Dashboard
+      icon: dashboard
 spec:
   owner: tribe-web-platforms
-  type: website
+  domain: customer-experience
 
-  parameters:
-    - title: Identidade do Componente
-      required: [owner, domain, system]
-      properties:
-        owner:
-          title: Dono (Grupo)
-          type: string
-          ui:field: OwnerPicker
-          ui:options:
-            catalogFilter:
-              - kind: Group
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: pp-payment-platform
+  title: Payment Platform
+  description: Plataforma de processamento de pagamentos e transações
+  tags:
+    - system
+    - payments
+    - fintech
+  links:
+    - url: https://payments.bonetttech.com/health
+      title: Health Check
+      icon: monitoring
+spec:
+  owner: vp-technology
+  domain: payments
 
-        domain:
-          title: Domínio de Negócio
-          type: string
-          ui:field: EntityPicker
-          ui:options:
-            catalogFilter:
-              - kind: Domain
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: mlp-ml-platform
+  title: ML Platform
+  description: Plataforma de Machine Learning e modelos de IA
+  tags:
+    - system
+    - ml
+    - ai
+  links:
+    - url: https://mlflow.bonetttech.com
+      title: MLflow
+      icon: ai
+    - url: https://kubeflow.bonetttech.com
+      title: Kubeflow
+      icon: ai
+spec:
+  owner: tribe-machine-learning
+  domain: data-intelligence
 
-        system:
-          title: Sistema
-          type: string
-          ui:field: EntityPicker
-          ui:options:
-            catalogFilter:
-              - kind: System
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: dp-data-platform
+  title: Data Platform
+  description: Plataforma de dados com data lake e pipelines ETL
+  tags:
+    - system
+    - data
+    - analytics
+  links:
+    - url: https://airflow.bonetttech.com
+      title: Airflow
+      icon: data
+    - url: https://metabase.bonetttech.com
+      title: Metabase
+      icon: dashboard
+spec:
+  owner: tribe-data-engineering
+  domain: data-intelligence
 
-    - title: Dados do Componente
-      required: [name, description]
-      properties:
-        name:
-          title: Nome (component_id)
-          type: string
-          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-          description: "Use kebab-case, ex: billing-api"
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: ap-auth-platform
+  title: Authentication Platform
+  description: Plataforma de autenticação e gestão de identidades
+  tags:
+    - system
+    - auth
+    - security
+  links:
+    - url: https://auth.bonetttech.com
+      title: Auth Service
+      icon: user
+spec:
+  owner: tribe-security
+  domain: authentication
 
-        description:
-          title: Descrição do componente
-          type: string
-          ui:widget: textarea
-          ui:options:
-            rows: 4
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: bp-blockchain-platform
+  title: Blockchain Platform
+  description: Plataforma Web3 e Smart Contracts
+  tags:
+    - system
+    - blockchain
+    - web3
+spec:
+  owner: tribe-blockchain
+  domain: emerging-technologies
 
-  steps:
-    # Step 1: Renderiza o skeleton do componente em ./template
-    - id: fetch-template
-      name: Buscar Template (componente)
-      action: fetch:template
-      input:
-        url: ./skeleton
-        targetPath: template
-        values:
-          component_id: ${{ parameters.name }}
-          name: ${{ parameters.name }}
-          description: ${{ parameters.description }}
-          owner: ${{ parameters.owner }}
-          domain: ${{ parameters.domain }}
-          system: ${{ parameters.system }}
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: iotp-iot-platform
+  title: IoT Platform
+  description: Plataforma de Internet das Coisas e Edge Computing
+  tags:
+    - system
+    - iot
+    - edge
+spec:
+  owner: tribe-iot-edge
+  domain: emerging-technologies
 
-    # Step 2: Publica o repositório do componente
-    - id: publish
-      name: Publicar repositório no GitHub
-      action: publish:github
-      input:
-        sourcePath: ./template
-        repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
-        description: ${{ parameters.description }}
-        defaultBranch: main
-        repoVisibility: private
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: dtp-devtools-platform
+  title: Developer Tools Platform
+  description: Ferramentas internas para desenvolvedores
+  tags:
+    - system
+    - devtools
+    - platform
+  links:
+    - url: https://backstage.bonetttech.com
+      title: Backstage
+      icon: catalog
+    - url: https://gitlab.bonetttech.com
+      title: GitLab
+      icon: github
+spec:
+  owner: tribe-devtools
+  domain: platform-services
 
-    # Step 3: (opcional) pequena espera
-    - id: wait-2sec
-      action: debug:wait
-      name: Espera
-      input:
-        seconds: 2
-
-    # Step 4: Renderiza metadata em ./metadata-output a partir de ./metadata (modelo que funciona)
-    - id: fetch-metadata
-      name: Prepare Metadata (catálogo central)
-      action: fetch:template
-      input:
-        url: ./metadata
-        targetPath: ./metadata-output
-        values:
-          component_id: ${{ parameters.name }}
-          name: ${{ parameters.name }}
-          description: ${{ parameters.description }}
-          owner: ${{ parameters.owner }}
-          domain: ${{ parameters.domain }}
-          system: ${{ parameters.system }}
-          system_slug: ${{ parameters.system | replace('system:default/', '') }}
-
-    # Step 5: Renomeia e organiza para <component>/<component>.yaml (local)
-    - id: rename-metadata
-      name: Rename Metadata File
-      action: fs:rename
-      input:
-        files:
-          - from: ./metadata-output/catalog-info.yaml
-            to: ./metadata-output/${{ parameters.name }}/${{ parameters.name }}.yaml
-
-    # Step 6: Abre PR no repo central, colocando em <system_slug>/<component>.yaml
-    - id: publish-metadata
-      name: Criar Metadata PR (repo central)
-      action: publish:github:pull-request
-      input:
-        repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-        branchName: add-${{ parameters.name }}
-        title: "feat: Add ${{ parameters.name }}"
-        description: |
-          ## 🎉 Novo Componente: ${{ parameters.name }}
-
-          **Sistema:** ${{ parameters.system }}
-          **Owner:** ${{ parameters.owner }}
-          **Descrição:** ${{ parameters.description }}
-
-          ### 📁 Arquivo criado:
-          `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml`
-
-          🚀 Faça merge para aparecer no catálogo.
-        sourcePath: metadata-output/${{ parameters.name }}
-        targetPath: ${{ parameters.system | replace('system:default/', '') }}
-
-  output:
-    links:
-      - title: 📦 Code Repository
-        url: ${{ steps.publish.output.remoteUrl }}
-      - title: 👉 Pull Request (catálogo central)
-        url: ${{ steps['publish-metadata'].output.remoteUrl }}
-
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: op-observability-platform
+  title: Observability Platform
+  description: Plataforma de monitoramento, logs e métricas
+  tags:
+    - system
+    - observability
+    - monitoring
+  links:
+    - url: https://grafana.bonetttech.com
+      title: Grafana
+      icon: dashboard
+    - url: https://kibana.bonetttech.com
+      title: Kibana
+      icon: search
+    - url: https://prometheus.bonetttech.com
+      title: Prometheus
+      icon: monitoring
+spec:
+  owner: tribe-devops-sre
+  domain: platform-services
