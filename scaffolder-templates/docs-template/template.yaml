@@ -57,7 +57,20 @@ spec:
             rows: 4
 
   steps:
-    # Step 1: Renderiza o skeleton do componente em ./template
+    - id: resolve-system-prefix
+      name: Resolver sigla do sistema
+      action: roadiehq:utils:jsonata
+      input:
+        data:
+          system: ${{ parameters.system }}
+          componentName: ${{ parameters.name }}
+        expression: >
+          {
+            "systemSlug": $replace(system, "system:default/", ""),
+            "systemPrefix": $split($replace(system, "system:default/", ""), "-")[0],
+            "repositoryName": $split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName
+          }
+
     - id: fetch-template
       name: Buscar Template (componente)
       action: fetch:template
@@ -67,30 +80,29 @@ spec:
         values:
           component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
+          repository_name: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
+          system_prefix: ${{ steps['resolve-system-prefix'].output.result.systemPrefix }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
 
-    # Step 2: Publica o repositório do componente
     - id: publish
       name: Publicar repositório no GitHub
       action: publish:github
       input:
         sourcePath: ./template
-        repoUrl: github.com?owner=bonett-labs&repo=${{ parameters.name }}
+        repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
         description: ${{ parameters.description }}
         defaultBranch: main
         repoVisibility: private
 
-    # Step 3: (opcional) pequena espera
     - id: wait-2sec
       action: debug:wait
       name: Espera
       input:
         seconds: 2
 
-    # Step 4: Renderiza metadata em ./metadata-output a partir de ./metadata (modelo que funciona)
     - id: fetch-metadata
       name: Prepare Metadata (catálogo central)
       action: fetch:template
@@ -100,13 +112,14 @@ spec:
         values:
           component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
+          repository_name: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
+          system_prefix: ${{ steps['resolve-system-prefix'].output.result.systemPrefix }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
-          system_slug: ${{ parameters.system | replace('system:default/', '') }}
+          system_slug: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
 
-    # Step 5: Renomeia e organiza para <component>/<component>.yaml (local)
     - id: rename-metadata
       name: Rename Metadata File
       action: fs:rename
@@ -115,7 +128,6 @@ spec:
           - from: ./metadata-output/catalog-info.yaml
             to: ./metadata-output/${{ parameters.name }}/${{ parameters.name }}.yaml
 
-    # Step 6: Abre PR no repo central, colocando em <system_slug>/<component>.yaml
     - id: publish-metadata
       name: Criar Metadata PR (repo central)
       action: publish:github:pull-request
@@ -127,15 +139,17 @@ spec:
           ## 🎉 Novo Componente: ${{ parameters.name }}
 
           **Sistema:** ${{ parameters.system }}
+          **Sigla:** ${{ steps['resolve-system-prefix'].output.result.systemPrefix }}
+          **Repositório:** ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
           **Owner:** ${{ parameters.owner }}
           **Descrição:** ${{ parameters.description }}
 
           ### 📁 Arquivo criado:
-          `${{ parameters.system | replace('system:default/', '') }}/${{ parameters.name }}.yaml`
+          `${{ steps['resolve-system-prefix'].output.result.systemSlug }}/${{ parameters.name }}.yaml`
 
           🚀 Faça merge para aparecer no catálogo.
         sourcePath: metadata-output/${{ parameters.name }}
-        targetPath: ${{ parameters.system | replace('system:default/', '') }}
+        targetPath: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
 
   output:
     links:
