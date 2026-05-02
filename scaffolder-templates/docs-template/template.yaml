@@ -106,7 +106,7 @@ spec:
         repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
         branch: main
         baseBranch: main
-        sourcePath: ./component-output
+        sourcePath: component-output
         targetPath: .
         createBranchIfMissing: false
         gitCommitMessage: >
