@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: manipulacao-arquivos-yaml
   title: Manipulate YAML
-  description: Repo do componente + PR de catalog-info.yaml em repositório central
+  description: Repo do componente + sincronizacao de catalog-info.yaml em repositorio central
   tags:
     - yaml
     - yml
@@ -25,7 +25,7 @@ spec:
               - kind: Group
 
         domain:
-          title: Domínio de Negócio
+          title: Dominio de Negocio
           type: string
           ui:field: EntityPicker
           ui:options:
@@ -46,11 +46,11 @@ spec:
         name:
           title: Nome (component_id)
           type: string
-          pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-          description: "Use kebab-case, ex: billing-api"
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          description: 'Use kebab-case, ex: billing-api'
 
         description:
-          title: Descrição do componente
+          title: Descricao do componente
           type: string
           ui:widget: textarea
           ui:options:
@@ -71,44 +71,24 @@ spec:
             "repositoryName": $split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName
           }
 
-    - id: fetch-template
-      name: Buscar Template (componente)
-      action: fetch:template
+    - id: ensure-component-repo
+      name: Garantir repositorio do componente
+      action: zentry:github:repo:ensure
       input:
-        url: ./skeleton
-        targetPath: template
-        values:
-          component_id: ${{ parameters.name }}
-          name: ${{ parameters.name }}
-          repository_name: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
-          system_prefix: ${{ steps['resolve-system-prefix'].output.result.systemPrefix }}
-          description: ${{ parameters.description }}
-          owner: ${{ parameters.owner }}
-          domain: ${{ parameters.domain }}
-          system: ${{ parameters.system }}
-
-    - id: publish
-      name: Publicar repositório no GitHub
-      action: publish:github
-      input:
-        sourcePath: ./template
         repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
         description: ${{ parameters.description }}
-        defaultBranch: main
         repoVisibility: private
+        defaultBranch: main
+        autoInit: true
+        hasIssues: false
+        hasWiki: false
 
-    - id: wait-2sec
-      action: debug:wait
-      name: Espera
-      input:
-        seconds: 2
-
-    - id: fetch-metadata
-      name: Prepare Metadata (catálogo central)
+    - id: fetch-template
+      name: Renderizar arquivos do componente e catalogo
       action: fetch:template
       input:
-        url: ./metadata
-        targetPath: ./metadata-output
+        url: ./template
+        targetPath: rendered-output
         values:
           component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
@@ -118,42 +98,54 @@ spec:
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
           system: ${{ parameters.system }}
-          system_slug: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
 
-    - id: rename-metadata
-      name: Rename Metadata File
-      action: fs:rename
+    - id: sync-component-branch
+      name: Publicar repositorio do componente
+      action: zentry:github:repo:sync-branch
       input:
-        files:
-          - from: ./metadata-output/catalog-info.yaml
-            to: ./metadata-output/${{ parameters.name }}/${{ parameters.name }}.yaml
+        repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
+        branch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
+        baseBranch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
+        sourcePath: ./rendered-output/repo
+        targetPath: .
+        createBranchIfMissing: false
+        gitCommitMessage: >
+          chore(scaffolder): publica componente ${{ parameters.name }}
 
-    - id: publish-metadata
-      name: Criar Metadata PR (repo central)
-      action: publish:github:pull-request
+    - id: ensure-catalog-repo
+      name: Garantir repositorio central do catalogo
+      action: zentry:github:repo:ensure
       input:
-        repoUrl: github.com?repo=bonettech-zentry-components&owner=bonett-labs
-        branchName: add-${{ parameters.name }}
-        title: "feat: Add ${{ parameters.name }}"
-        description: |
-          ## 🎉 Novo Componente: ${{ parameters.name }}
+        repoUrl: github.com?owner=bonett-labs&repo=bonettech-zentry-components
+        description: Repositorio central de catalog-info dos componentes
+        repoVisibility: private
+        defaultBranch: main
+        autoInit: true
+        hasIssues: false
+        hasWiki: false
 
-          **Sistema:** ${{ parameters.system }}
-          **Sigla:** ${{ steps['resolve-system-prefix'].output.result.systemPrefix }}
-          **Repositório:** ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
-          **Owner:** ${{ parameters.owner }}
-          **Descrição:** ${{ parameters.description }}
-
-          ### 📁 Arquivo criado:
-          `${{ steps['resolve-system-prefix'].output.result.systemSlug }}/${{ parameters.name }}.yaml`
-
-          🚀 Faça merge para aparecer no catálogo.
-        sourcePath: metadata-output/${{ parameters.name }}
+    - id: sync-catalog-branch
+      name: Sincronizar metadata em branch do catalogo
+      action: zentry:github:repo:sync-branch
+      input:
+        repoUrl: github.com?owner=bonett-labs&repo=bonettech-zentry-components
+        branch: add-${{ parameters.name }}
+        baseBranch: ${{ steps['ensure-catalog-repo'].output.defaultBranch }}
+        sourcePath: ./rendered-output/catalog
         targetPath: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
+        createBranchIfMissing: true
+        gitCommitMessage: >
+          feat(catalog): adiciona ${{ parameters.name }}.yaml
 
   output:
+    text:
+      - title: Resultado
+        content: |
+          Repositorio do componente: `bonett-labs/${{ steps['resolve-system-prefix'].output.result.repositoryName }}`
+          Branch publicada no catalogo central: `add-${{ parameters.name }}`
+          Arquivo sincronizado: `${{ steps['resolve-system-prefix'].output.result.systemSlug }}/${{ parameters.name }}.yaml`
     links:
-      - title: 📦 Code Repository
-        url: ${{ steps.publish.output.remoteUrl }}
-      - title: 👉 Pull Request (catálogo central)
-        url: ${{ steps['publish-metadata'].output.remoteUrl }}
+      - title: Repositorio do componente
+        url: ${{ steps['sync-component-branch'].output.repoContentsUrl }}
+      - title: Branch do catalogo central
+        url: ${{ steps['sync-catalog-branch'].output.repoContentsUrl }}
