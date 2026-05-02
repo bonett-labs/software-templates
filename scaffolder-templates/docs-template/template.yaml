@@ -104,8 +104,8 @@ spec:
       action: zentry:github:repo:sync-branch
       input:
         repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
-        branch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
-        baseBranch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
+        branch: main
+        baseBranch: main
         sourcePath: ./component-output
         targetPath: .
         createBranchIfMissing: false
