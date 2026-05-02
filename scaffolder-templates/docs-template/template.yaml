@@ -68,7 +68,8 @@ spec:
           {
             "systemSlug": $replace(system, "system:default/", ""),
             "systemPrefix": $split($replace(system, "system:default/", ""), "-")[0],
-            "repositoryName": $split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName
+            "repositoryName": $split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName,
+            "catalogFileName": $replace(system, "system:default/", "") & "-" & ($split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName)
           }
 
     - id: ensure-component-repo
@@ -87,13 +88,15 @@ spec:
       name: Renderizar arquivos do componente
       action: fetch:template
       input:
-        url: ./skeleton
-        targetPath: template
+        url: ./template
+        targetPath: component-output
         values:
           component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
           repository_name: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
           system_prefix: ${{ steps['resolve-system-prefix'].output.result.systemPrefix }}
+          system_slug: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
+          catalog_file_name: ${{ steps['resolve-system-prefix'].output.result.catalogFileName }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
@@ -104,9 +107,9 @@ spec:
       action: zentry:github:repo:sync-branch
       input:
         repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
-        branch: main
-        baseBranch: main
-        sourcePath: template
+        branch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
+        baseBranch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
+        sourcePath: ./component-output
         targetPath: .
         createBranchIfMissing: false
         gitCommitMessage: >
@@ -116,13 +119,15 @@ spec:
       name: Renderizar metadata do catalogo
       action: fetch:template
       input:
-        url: ./metadata
+        url: ./catalog
         targetPath: catalog-output
         values:
           component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
           repository_name: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
           system_prefix: ${{ steps['resolve-system-prefix'].output.result.systemPrefix }}
+          system_slug: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
+          catalog_file_name: ${{ steps['resolve-system-prefix'].output.result.catalogFileName }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           domain: ${{ parameters.domain }}
@@ -136,10 +141,10 @@ spec:
         branch: add-${{ parameters.name }}
         baseBranch: main
         sourcePath: ./catalog-output
-        targetPath: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
+        targetPath: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
         createBranchIfMissing: true
         gitCommitMessage: >
-          feat(catalog): adiciona ${{ parameters.name }}.yaml
+          feat(catalog): adiciona ${{ steps['resolve-system-prefix'].output.result.catalogFileName }}.yaml
 
     - id: resolve-catalog-url
       name: Resolver URL do arquivo no catalogo central
@@ -147,10 +152,10 @@ spec:
       input:
         data:
           repoContentsUrl: ${{ steps['sync-catalog-branch'].output.repoContentsUrl }}
-          componentName: ${{ parameters.name }}
+          catalogFileName: ${{ steps['resolve-system-prefix'].output.result.catalogFileName }}
         expression: >
           {
-            "catalogInfoUrl": $replace(repoContentsUrl, "/tree/", "/blob/") & "/" & componentName & ".yaml"
+            "catalogInfoUrl": $replace(repoContentsUrl, "/tree/", "/blob/") & "/" & catalogFileName & ".yaml"
           }
 
     - id: register-component
@@ -164,9 +169,13 @@ spec:
       - title: Resultado
         content: |
           Repositorio do componente: `bonett-labs/${{ steps['resolve-system-prefix'].output.result.repositoryName }}`
+          Entidade registrada: `${{ steps['register-component'].output.entityRef }}`
           Branch publicada no catalogo central: `add-${{ parameters.name }}`
-          Arquivo sincronizado: `${{ steps['resolve-system-prefix'].output.result.systemSlug }}/${{ parameters.name }}.yaml`
+          URL registrada: `${{ steps['register-component'].output.catalogInfoUrl }}`
+          Arquivo sincronizado: `${{ steps['resolve-system-prefix'].output.result.systemSlug }}/${{ steps['resolve-system-prefix'].output.result.catalogFileName }}.yaml`
     links:
+      - title: Entidade no catalogo
+        entityRef: ${{ steps['register-component'].output.entityRef }}
       - title: Repositorio do componente
         url: ${{ steps['sync-component-branch'].output.repoContentsUrl }}
       - title: Branch do catalogo central
