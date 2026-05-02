@@ -116,7 +116,7 @@ spec:
       name: Renderizar metadata do catalogo
       action: fetch:template
       input:
-        url: ./catalog
+        url: ./metadata
         targetPath: catalog-output
         values:
           component_id: ${{ parameters.name }}
