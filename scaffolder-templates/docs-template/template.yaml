@@ -69,7 +69,7 @@ spec:
             "systemSlug": $replace(system, "system:default/", ""),
             "systemPrefix": $split($replace(system, "system:default/", ""), "-")[0],
             "repositoryName": $split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName,
-            "catalogFileName": $replace(system, "system:default/", "") & "-" & ($split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName)
+            "catalogFileName": $split($replace(system, "system:default/", ""), "-")[0] & "-" & componentName
           }
 
     - id: ensure-component-repo
