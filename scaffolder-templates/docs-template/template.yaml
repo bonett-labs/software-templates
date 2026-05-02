@@ -87,8 +87,8 @@ spec:
       name: Renderizar arquivos do componente
       action: fetch:template
       input:
-        url: ./template
-        targetPath: component-output
+        url: ./skeleton
+        targetPath: template
         values:
           component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
@@ -106,7 +106,7 @@ spec:
         repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
         branch: main
         baseBranch: main
-        sourcePath: component-output
+        sourcePath: template
         targetPath: .
         createBranchIfMissing: false
         gitCommitMessage: >
