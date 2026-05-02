@@ -136,7 +136,7 @@ spec:
         branch: add-${{ parameters.name }}
         baseBranch: main
         sourcePath: ./catalog-output
-        targetPath: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
+        targetPath: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
         createBranchIfMissing: true
         gitCommitMessage: >
           feat(catalog): adiciona ${{ parameters.name }}.yaml
