@@ -88,7 +88,7 @@ spec:
       name: Renderizar arquivos do componente
       action: fetch:template
       input:
-        url: ./template
+        url: ./skeleton
         targetPath: component-output
         values:
           component_id: ${{ parameters.name }}
@@ -119,7 +119,7 @@ spec:
       name: Renderizar metadata do catalogo
       action: fetch:template
       input:
-        url: ./catalog
+        url: ./metadata
         targetPath: catalog-output
         values:
           component_id: ${{ parameters.name }}
