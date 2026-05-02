@@ -87,8 +87,8 @@ spec:
       name: Renderizar arquivos do componente
       action: fetch:template
       input:
-        url: ./template
-        targetPath: component-output
+        url: ./skeleton
+        targetPath: template
         values:
           component_id: ${{ parameters.name }}
           name: ${{ parameters.name }}
@@ -104,9 +104,9 @@ spec:
       action: zentry:github:repo:sync-branch
       input:
         repoUrl: github.com?owner=bonett-labs&repo=${{ steps['resolve-system-prefix'].output.result.repositoryName }}
-        branch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
-        baseBranch: ${{ steps['ensure-component-repo'].output.defaultBranch }}
-        sourcePath: ./component-output
+        branch: main
+        baseBranch: main
+        sourcePath: template
         targetPath: .
         createBranchIfMissing: false
         gitCommitMessage: >
@@ -116,7 +116,7 @@ spec:
       name: Renderizar metadata do catalogo
       action: fetch:template
       input:
-        url: ./catalog
+        url: ./metadata
         targetPath: catalog-output
         values:
           component_id: ${{ parameters.name }}
@@ -136,7 +136,7 @@ spec:
         branch: add-${{ parameters.name }}
         baseBranch: main
         sourcePath: ./catalog-output
-        targetPath: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
+        targetPath: ${{ steps['resolve-system-prefix'].output.result.repositoryName }}
         createBranchIfMissing: true
         gitCommitMessage: >
           feat(catalog): adiciona ${{ parameters.name }}.yaml
@@ -164,13 +164,9 @@ spec:
       - title: Resultado
         content: |
           Repositorio do componente: `bonett-labs/${{ steps['resolve-system-prefix'].output.result.repositoryName }}`
-          Entidade registrada: `${{ steps['register-component'].output.entityRef }}`
           Branch publicada no catalogo central: `add-${{ parameters.name }}`
-          URL registrada: `${{ steps['register-component'].output.catalogInfoUrl }}`
           Arquivo sincronizado: `${{ steps['resolve-system-prefix'].output.result.systemSlug }}/${{ parameters.name }}.yaml`
     links:
-      - title: Entidade no catalogo
-        entityRef: ${{ steps['register-component'].output.entityRef }}
       - title: Repositorio do componente
         url: ${{ steps['sync-component-branch'].output.repoContentsUrl }}
       - title: Branch do catalogo central
