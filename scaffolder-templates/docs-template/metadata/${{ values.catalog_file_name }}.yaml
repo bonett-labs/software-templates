@@ -4,11 +4,11 @@ metadata:
   name: ${{ values.catalog_file_name  }}
   description: ${{ values.description }}
   annotations:
-    github.com/project-slug: bonett-labs/${{ values.repositoryName }}
+    github.com/project-slug: bonett-labs/${{ values.repository_name }}
     backstage.io/techdocs-ref: dir:.
-    backstage.io/source-location: url:https://github.com/bonett-labs/${{ values.repositoryName }}
+    backstage.io/source-location: url:https://github.com/bonett-labs/${{ values.repository_name }}
   links:
-    - url: https://github.com/bonett-labs/${{ values.repositoryName }}
+    - url: https://github.com/bonett-labs/${{ values.repository_name }}
       title: GitHub Repository
       icon: github
   tags:
