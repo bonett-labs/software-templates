@@ -138,11 +138,11 @@ spec:
       action: zentry:github:repo:sync-branch
       input:
         repoUrl: github.com?owner=bonett-labs&repo=bonettech-zentry-components
-        branch: add-${{ parameters.name }}
+        branch: main
         baseBranch: main
         sourcePath: ./catalog-output
         targetPath: ${{ steps['resolve-system-prefix'].output.result.systemSlug }}
-        createBranchIfMissing: true
+        createBranchIfMissing: false
         gitCommitMessage: >
           feat(catalog): adiciona ${{ steps['resolve-system-prefix'].output.result.catalogFileName }}.yaml
 
@@ -170,7 +170,7 @@ spec:
         content: |
           Repositorio do componente: `bonett-labs/${{ steps['resolve-system-prefix'].output.result.repositoryName }}`
           Entidade registrada: `${{ steps['register-component'].output.entityRef }}`
-          Branch publicada no catalogo central: `add-${{ parameters.name }}`
+          Branch publicada no catalogo central: `main`
           URL registrada: `${{ steps['register-component'].output.catalogInfoUrl }}`
           Arquivo sincronizado: `${{ steps['resolve-system-prefix'].output.result.systemSlug }}/${{ steps['resolve-system-prefix'].output.result.catalogFileName }}.yaml`
     links:
