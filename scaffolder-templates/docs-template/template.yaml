@@ -163,6 +163,7 @@ spec:
       action: catalog:register
       input:
         catalogInfoUrl: ${{ steps['resolve-catalog-url'].output.result.catalogInfoUrl }}
+        optional: true
 
   output:
     text:
