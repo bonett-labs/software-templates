@@ -41,7 +41,7 @@ spec:
               - kind: System
 
     - title: Dados do Componente
-      required: [name]
+      required: [name, description]
       properties:
         name:
           title: Nome (component_id)
